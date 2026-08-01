@@ -103,58 +103,64 @@
 
   function playTick() {
     if (muted) return;
-    const ac = getAudioCtx();
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
-    osc.type = "square";
-    osc.frequency.value = 950;
-    gain.gain.setValueAtTime(0.16, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
-    osc.connect(gain);
-    gain.connect(ac.destination);
-    osc.start();
-    osc.stop(ac.currentTime + 0.07);
+    try {
+      const ac = getAudioCtx();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = "square";
+      osc.frequency.value = 950;
+      gain.gain.setValueAtTime(0.16, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start();
+      osc.stop(ac.currentTime + 0.07);
+    } catch (e) { /* audio unavailable in this environment, ignore */ }
   }
 
   function playWin() {
     if (muted) return;
-    const ac = getAudioCtx();
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
-    notes.forEach((freq, i) => {
-      const start = ac.currentTime + i * 0.11;
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.type = "triangle";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
-      osc.connect(gain);
-      gain.connect(ac.destination);
-      osc.start(start);
-      osc.stop(start + 0.4);
-    });
+    try {
+      const ac = getAudioCtx();
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+      notes.forEach((freq, i) => {
+        const start = ac.currentTime + i * 0.11;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(start);
+        osc.stop(start + 0.4);
+      });
+    } catch (e) { /* audio unavailable in this environment, ignore */ }
   }
 
   function playWhoosh() {
     if (muted) return;
-    const ac = getAudioCtx();
-    const bufferSize = ac.sampleRate * 0.4;
-    const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-    const noise = ac.createBufferSource();
-    noise.buffer = buffer;
-    const filter = ac.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = 800;
-    const gain = ac.createGain();
-    gain.gain.setValueAtTime(0.25, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.4);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(ac.destination);
-    noise.start();
+    try {
+      const ac = getAudioCtx();
+      const bufferSize = ac.sampleRate * 0.4;
+      const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      const noise = ac.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ac.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 800;
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0.25, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.4);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ac.destination);
+      noise.start();
+    } catch (e) { /* audio unavailable in this environment, ignore */ }
   }
 
   function updateSoundIcon() {
