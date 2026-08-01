@@ -118,40 +118,62 @@
     } catch (e) { /* audio unavailable in this environment, ignore */ }
   }
 
+  function playBrassNote(ac, freq, start, dur, peakGain, vibrato) {
+    const filter = ac.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 2600;
+    filter.Q.value = 0.7;
+    filter.connect(ac.destination);
+
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(peakGain, start + 0.03);
+    gain.gain.setValueAtTime(peakGain, start + Math.max(0.03, dur - 0.18));
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    gain.connect(filter);
+
+    // Two slightly detuned sawtooth oscillators for a fuller brass-section timbre
+    [-6, 6].forEach(detune => {
+      const osc = ac.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.value = freq;
+      osc.detune.value = detune;
+      osc.connect(gain);
+      osc.start(start);
+      osc.stop(start + dur + 0.05);
+    });
+
+    if (vibrato) {
+      const lfo = ac.createOscillator();
+      const lfoGain = ac.createGain();
+      lfo.frequency.value = 6;
+      lfoGain.gain.value = 6;
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.detune);
+      lfo.start(start + 0.15);
+      lfo.stop(start + dur + 0.05);
+    }
+  }
+
   function playWin() {
     if (muted) return;
     try {
       const ac = getAudioCtx();
       const now = ac.currentTime;
 
-      // Ascending "¡tá-tá-taaán!" chord progression, brighter each step
-      const chords = [
-        { time: 0.00, freqs: [523.25, 659.25, 783.99], gain: 0.16, sustain: 0.22 },  // C5 E5 G5
-        { time: 0.16, freqs: [659.25, 830.61, 987.77], gain: 0.16, sustain: 0.22 },  // E5 G#5 B5
-        { time: 0.32, freqs: [783.99, 987.77, 1174.66, 1567.98], gain: 0.2, sustain: 0.9 } // G5 B5 D6 G6 (big finish)
+      // Classic trumpet fanfare motif: "¡ta-ta-ta-taaán!"
+      const fanfare = [
+        { freq: 783.99, start: 0.00, dur: 0.16, gain: 0.24 },              // G5 - ta
+        { freq: 783.99, start: 0.18, dur: 0.16, gain: 0.24 },              // G5 - ta
+        { freq: 987.77, start: 0.36, dur: 0.16, gain: 0.24 },              // B5 - ta
+        { freq: 1046.5, start: 0.54, dur: 0.95, gain: 0.28, vibrato: true } // C6 - taaaán (held, with vibrato)
       ];
+      fanfare.forEach(n => playBrassNote(ac, n.freq, now + n.start, n.dur, n.gain, n.vibrato));
 
-      chords.forEach(chord => {
-        chord.freqs.forEach(freq => {
-          const start = now + chord.time;
-          const osc = ac.createOscillator();
-          const gain = ac.createGain();
-          osc.type = "triangle";
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(chord.gain, start + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + chord.sustain);
-          osc.connect(gain);
-          gain.connect(ac.destination);
-          osc.start(start);
-          osc.stop(start + chord.sustain + 0.05);
-        });
-      });
-
-      // Twinkly confetti-pop sparkles scattered on top, pentatonic so they always sound pleasant
+      // Twinkly confetti-pop sparkles scattered on top of the fanfare
       const sparkleNotes = [1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
       for (let i = 0; i < 12; i++) {
-        const start = now + 0.1 + Math.random() * 0.85;
+        const start = now + 0.5 + Math.random() * 0.9;
         const freq = sparkleNotes[Math.floor(Math.random() * sparkleNotes.length)];
         const osc = ac.createOscillator();
         const gain = ac.createGain();
