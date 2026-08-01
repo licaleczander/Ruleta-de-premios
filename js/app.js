@@ -122,21 +122,49 @@
     if (muted) return;
     try {
       const ac = getAudioCtx();
-      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
-      notes.forEach((freq, i) => {
-        const start = ac.currentTime + i * 0.11;
+      const now = ac.currentTime;
+
+      // Ascending "¡tá-tá-taaán!" chord progression, brighter each step
+      const chords = [
+        { time: 0.00, freqs: [523.25, 659.25, 783.99], gain: 0.16, sustain: 0.22 },  // C5 E5 G5
+        { time: 0.16, freqs: [659.25, 830.61, 987.77], gain: 0.16, sustain: 0.22 },  // E5 G#5 B5
+        { time: 0.32, freqs: [783.99, 987.77, 1174.66, 1567.98], gain: 0.2, sustain: 0.9 } // G5 B5 D6 G6 (big finish)
+      ];
+
+      chords.forEach(chord => {
+        chord.freqs.forEach(freq => {
+          const start = now + chord.time;
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = "triangle";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(chord.gain, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + chord.sustain);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(start);
+          osc.stop(start + chord.sustain + 0.05);
+        });
+      });
+
+      // Twinkly confetti-pop sparkles scattered on top, pentatonic so they always sound pleasant
+      const sparkleNotes = [1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
+      for (let i = 0; i < 12; i++) {
+        const start = now + 0.1 + Math.random() * 0.85;
+        const freq = sparkleNotes[Math.floor(Math.random() * sparkleNotes.length)];
         const osc = ac.createOscillator();
         const gain = ac.createGain();
-        osc.type = "triangle";
+        osc.type = "sine";
         osc.frequency.value = freq;
         gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.09, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
         osc.connect(gain);
         gain.connect(ac.destination);
         osc.start(start);
-        osc.stop(start + 0.4);
-      });
+        osc.stop(start + 0.32);
+      }
     } catch (e) { /* audio unavailable in this environment, ignore */ }
   }
 
