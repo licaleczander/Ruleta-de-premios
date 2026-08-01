@@ -57,6 +57,23 @@
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
+  // Wire the spin button up first, before anything else runs, so the wheel
+  // can always respond to taps even if a later part of setup fails.
+  // (function declarations are hoisted, so `spin` already exists here)
+  btnSpin.addEventListener("click", spin);
+
+  // Square the wheel with plain JS instead of relying on CSS aspect-ratio/min(),
+  // which some older mobile browsers and embedded webviews don't support.
+  function sizeWheel() {
+    const wrap = document.querySelector(".wheel-wrap");
+    if (!wrap) return;
+    const available = Math.min(window.innerWidth * 0.88, 340);
+    const size = Math.max(180, Math.round(available));
+    wrap.style.width = size + "px";
+    wrap.style.height = size + "px";
+  }
+  window.addEventListener("resize", sizeWheel);
+
   /* ---------------- Persistence ---------------- */
   function loadPrizes() {
     try {
@@ -307,75 +324,104 @@
     if (spinning || prizes.length < 2) return;
     spinning = true;
     btnSpin.disabled = true;
-    document.querySelector(".wheel-wrap").classList.add("spinning");
+    const wrap = document.querySelector(".wheel-wrap");
+    if (wrap) wrap.classList.add("spinning");
 
-    const n = prizes.length;
-    const segAngleDeg = 360 / n;
-    const targetIndex = weightedRandomIndex();
+    // Safety net: if anything below goes wrong and finishSpin() never runs,
+    // don't leave the button permanently stuck disabled.
+    const watchdog = setTimeout(() => {
+      if (spinning) {
+        console.error("KidsBabys wheel: spin watchdog triggered, resetting.");
+        finishSpin(weightedRandomIndex());
+      }
+    }, 9000);
 
-    const midAngleDeg = targetIndex * segAngleDeg + segAngleDeg / 2;
-    const jitter = (Math.random() - 0.5) * segAngleDeg * 0.6;
-    const targetMid = midAngleDeg + jitter;
+    try {
+      const n = prizes.length;
+      const segAngleDeg = 360 / n;
+      const targetIndex = weightedRandomIndex();
 
-    const normalizedCurrent = ((currentRotation % 360) + 360) % 360;
-    const desiredFinalNormalized = ((360 - targetMid) % 360 + 360) % 360;
+      const midAngleDeg = targetIndex * segAngleDeg + segAngleDeg / 2;
+      const jitter = (Math.random() - 0.5) * segAngleDeg * 0.6;
+      const targetMid = midAngleDeg + jitter;
 
-    let delta = desiredFinalNormalized - normalizedCurrent;
-    if (delta <= 0) delta += 360;
+      const normalizedCurrent = ((currentRotation % 360) + 360) % 360;
+      const desiredFinalNormalized = ((360 - targetMid) % 360 + 360) % 360;
 
-    const extraSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full turns
-    const totalDelta = extraSpins * 360 + delta;
-    const startRotation = currentRotation;
-    const endRotation = currentRotation + totalDelta;
+      let delta = desiredFinalNormalized - normalizedCurrent;
+      if (delta <= 0) delta += 360;
 
-    const duration = 4200 + Math.random() * 600;
-    const startTime = performance.now();
+      const extraSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full turns
+      const totalDelta = extraSpins * 360 + delta;
+      const startRotation = currentRotation;
+      const endRotation = currentRotation + totalDelta;
 
-    playWhoosh();
+      const duration = 4200 + Math.random() * 600;
+      const startTime = performance.now();
 
-    let lastSegCrossed = -1;
+      playWhoosh();
 
-    function frame(now) {
-      const elapsed = now - startTime;
-      const t = Math.min(1, elapsed / duration);
-      const eased = easeOutCubic(t);
-      const rotation = startRotation + totalDelta * eased;
-      canvas.style.transform = `rotate(${rotation}deg)`;
+      let lastSegCrossed = -1;
 
-      const traveled = rotation - startRotation;
-      const segCrossed = Math.floor(traveled / segAngleDeg);
-      if (segCrossed !== lastSegCrossed) {
-        lastSegCrossed = segCrossed;
-        playTick();
+      function frame(now) {
+        try {
+          const elapsed = now - startTime;
+          const t = Math.min(1, elapsed / duration);
+          const eased = easeOutCubic(t);
+          const rotation = startRotation + totalDelta * eased;
+          canvas.style.transform = `rotate(${rotation}deg)`;
+
+          const traveled = rotation - startRotation;
+          const segCrossed = Math.floor(traveled / segAngleDeg);
+          if (segCrossed !== lastSegCrossed) {
+            lastSegCrossed = segCrossed;
+            playTick();
+          }
+
+          currentRotation = rotation;
+
+          if (t < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            currentRotation = endRotation % 360;
+            canvas.style.transform = `rotate(${endRotation}deg)`;
+            clearTimeout(watchdog);
+            finishSpin(targetIndex);
+          }
+        } catch (e) {
+          console.error("KidsBabys wheel: error mid-spin, finishing anyway.", e);
+          clearTimeout(watchdog);
+          finishSpin(targetIndex);
+        }
       }
 
-      currentRotation = rotation;
-
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        currentRotation = endRotation % 360;
-        canvas.style.transform = `rotate(${endRotation}deg)`;
-        finishSpin(targetIndex);
-      }
+      requestAnimationFrame(frame);
+    } catch (e) {
+      console.error("KidsBabys wheel: error starting spin.", e);
+      clearTimeout(watchdog);
+      spinning = false;
+      btnSpin.disabled = false;
+      if (wrap) wrap.classList.remove("spinning");
     }
-
-    requestAnimationFrame(frame);
   }
 
   function finishSpin(index) {
     spinning = false;
     btnSpin.disabled = false;
-    document.querySelector(".wheel-wrap").classList.remove("spinning");
+    const wrap = document.querySelector(".wheel-wrap");
+    if (wrap) wrap.classList.remove("spinning");
 
-    const prize = prizes[index];
-    if (navigator.vibrate) navigator.vibrate([40, 30, 90]);
+    const prize = prizes[index] || prizes[0];
+
+    try { if (navigator.vibrate) navigator.vibrate([40, 30, 90]); } catch (e) { /* ignore */ }
     playWin();
 
-    const entry = { label: prize.label, emoji: prize.emoji, color: prize.color, date: new Date().toISOString() };
-    history.unshift(entry);
-    if (history.length > 100) history.length = 100;
-    saveHistory();
+    try {
+      const entry = { label: prize.label, emoji: prize.emoji, color: prize.color, date: new Date().toISOString() };
+      history.unshift(entry);
+      if (history.length > 100) history.length = 100;
+      saveHistory();
+    } catch (e) { console.error("KidsBabys wheel: could not save history.", e); }
 
     showPrizeModal(prize);
   }
@@ -549,9 +595,13 @@
     closeModal(settingsModal);
   });
 
-  /* ---------------- Spin trigger ---------------- */
-  btnSpin.addEventListener("click", spin);
-
   /* ---------------- Init ---------------- */
-  drawWheel();
+  // Spin button is already wired up above; everything else is best-effort
+  // and should never be able to take the wheel down with it.
+  try {
+    sizeWheel();
+    drawWheel();
+  } catch (e) {
+    console.error("KidsBabys wheel init error:", e);
+  }
 })();
