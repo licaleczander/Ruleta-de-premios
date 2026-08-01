@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KidsBabys · Ruleta de Premios</title>
+<meta name="description" content="Ruleta de premios personalizada para KidsBabys">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <button class="icon-btn" id="btnHistory" title="Historial" aria-label="Historial">
+      <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M12 3v5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M3 3v5h5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="brand">
+      <span class="brand-emoji">🧸</span>
+      <div class="brand-text">
+        <strong>KidsBabys</strong>
+        <span>Ruleta de Premios</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="icon-btn" id="btnSound" title="Sonido" aria-label="Activar o silenciar sonido">
+        <svg viewBox="0 0 24 24" id="iconSoundOn"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M19 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 24 24" id="iconSoundOff" hidden><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" title="Personalizar" aria-label="Personalizar ruleta">
+        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="2" fill="none"/><path d="M19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V19a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H4a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H10a1.7 1.7 0 0 0 1-1.6V4a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V10a1.7 1.7 0 0 0 1.6 1H20a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <canvas id="wheelCanvas" width="600" height="600"></canvas>
+      <button class="hub" id="btnSpin" aria-label="Girar la ruleta">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="white" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M20 4v5h-5" stroke="white" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>GIRAR</span>
+      </button>
+    </div>
+    <p class="hint">Toca el centro de la ruleta o el botón para girar</p>
+  </main>
+
+  <footer class="bottombar">
+    <button class="icon-btn" id="btnResetHistory" title="Borrar historial" aria-label="Borrar historial">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m-9 0 1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span class="footer-brand">KidsBabys © <span id="year"></span></span>
+    <button class="icon-btn" id="btnAbout" title="Acerca de" aria-label="Acerca de">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+    </button>
+  </footer>
+</div>
+
+<!-- Prize modal -->
+<div class="modal-overlay" id="prizeModal">
+  <div class="modal prize-modal">
+    <div class="confetti-layer" id="confettiLayer"></div>
+    <div class="prize-emoji" id="prizeEmoji">🎉</div>
+    <h2>¡Felicidades!</h2>
+    <p class="prize-name" id="prizeName">Premio</p>
+    <p class="prize-sub">Muestra esta pantalla en caja para reclamarlo</p>
+    <button class="btn-primary" id="btnCloseModal">Aceptar</button>
+  </div>
+</div>
+
+<!-- History modal -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal">
+    <h2>Historial de premios</h2>
+    <div class="history-list" id="historyList"></div>
+    <button class="btn-secondary" id="btnCloseHistory">Cerrar</button>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal settings-modal">
+    <h2>Personalizar ruleta</h2>
+    <p class="settings-sub">Edita los premios, colores y probabilidad de cada sector.</p>
+    <div class="prize-editor-list" id="prizeEditorList"></div>
+    <button class="btn-secondary" id="btnAddPrize">+ Agregar premio</button>
+    <div class="settings-actions">
+      <button class="btn-ghost" id="btnRestoreDefaults">Restaurar predeterminados</button>
+      <button class="btn-primary" id="btnSaveSettings">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div class="modal-overlay" id="aboutModal">
+  <div class="modal">
+    <h2>KidsBabys</h2>
+    <p>Ruleta de premios personalizada, hecha para sortear descuentos y regalos entre los clientes de KidsBabys. Gira, gana y disfruta. 🧸🎈</p>
+    <button class="btn-secondary" id="btnCloseAbout">Cerrar</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
