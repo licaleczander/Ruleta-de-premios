@@ -172,25 +172,66 @@
     }
   }
 
+  function playRiser(ac, start, dur) {
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(280, start);
+    osc.frequency.exponentialRampToValueAtTime(1600, start + dur);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.11, start + dur * 0.7);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(start);
+    osc.stop(start + dur + 0.02);
+  }
+
+  function playCymbalHit(ac, start, dur, peakGain) {
+    const bufferSize = Math.round(ac.sampleRate * dur);
+    const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ac.createBufferSource();
+    noise.buffer = buffer;
+    const hp = ac.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 4500;
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(peakGain, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    noise.connect(hp);
+    hp.connect(gain);
+    gain.connect(ac.destination);
+    noise.start(start);
+    noise.stop(start + dur);
+  }
+
   function playWin() {
     if (muted) return;
     try {
       const ac = getAudioCtx();
       const now = ac.currentTime;
 
-      // Classic trumpet fanfare motif: "¡ta-ta-ta-taaán!"
+      // A quick rising "here it comes!" sweep, then a bright cymbal stinger
+      // right as the fanfare hits — gives the reveal a real surprise punch.
+      const revealAt = 0.18;
+      playRiser(ac, now, revealAt);
+      playCymbalHit(ac, now + revealAt, 0.8, 0.17);
+
+      // Classic trumpet fanfare motif: "¡ta-ta-ta-taaán!", landing on the stinger
       const fanfare = [
-        { freq: 783.99, start: 0.00, dur: 0.16, gain: 0.24 },              // G5 - ta
-        { freq: 783.99, start: 0.18, dur: 0.16, gain: 0.24 },              // G5 - ta
-        { freq: 987.77, start: 0.36, dur: 0.16, gain: 0.24 },              // B5 - ta
-        { freq: 1046.5, start: 0.54, dur: 0.95, gain: 0.28, vibrato: true } // C6 - taaaán (held, with vibrato)
+        { freq: 783.99, start: revealAt + 0.00, dur: 0.16, gain: 0.24 },              // G5 - ta
+        { freq: 783.99, start: revealAt + 0.18, dur: 0.16, gain: 0.24 },              // G5 - ta
+        { freq: 987.77, start: revealAt + 0.36, dur: 0.16, gain: 0.24 },              // B5 - ta
+        { freq: 1046.5, start: revealAt + 0.54, dur: 0.95, gain: 0.28, vibrato: true } // C6 - taaaán (held, with vibrato)
       ];
       fanfare.forEach(n => playBrassNote(ac, n.freq, now + n.start, n.dur, n.gain, n.vibrato));
 
       // Twinkly confetti-pop sparkles scattered on top of the fanfare
       const sparkleNotes = [1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
       for (let i = 0; i < 12; i++) {
-        const start = now + 0.5 + Math.random() * 0.9;
+        const start = now + revealAt + 0.5 + Math.random() * 0.9;
         const freq = sparkleNotes[Math.floor(Math.random() * sparkleNotes.length)];
         const osc = ac.createOscillator();
         const gain = ac.createGain();
